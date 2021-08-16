@@ -2169,6 +2169,7 @@ func NewMarlinAPI(b Backend) *PublicMarlinAPI {
 }
 
 type ethBackend interface {
+	ValidateTransaction(tx *types.Transaction) error
 	ChainHeaderReader() consensus.ChainHeaderReader
 	Engine() consensus.Engine
 }
@@ -2252,4 +2253,18 @@ func (api *PublicMarlinAPI) AnalyzeBlock(ctx context.Context, hexBlock string) (
 	}
 
 	return retval, nil
+}
+
+func (api *PublicMarlinAPI) AnalyzeTransaction(ctx context.Context, hexTransaction hexutil.Bytes) (bool, error) {
+	tx := new(types.Transaction)
+	if err := tx.UnmarshalBinary(hexTransaction); err != nil {
+		return false, err
+	}
+	backend := api.b.(ethBackend)
+
+	if err := backend.ValidateTransaction(tx); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
